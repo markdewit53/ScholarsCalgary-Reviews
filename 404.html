@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scholars Calgary - Your Review</title>
+  <title>Scholars Calgary Review</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,7 +23,7 @@
       margin-bottom: 20px;
       line-height: 1.4;
     }
-    a.button {
+    a {
       text-decoration: none;
       display: inline-block;
       width: 90%;
@@ -64,75 +64,38 @@
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
-  <p class="message" id="msgReview">If you’re happy with our work, please leave us a 5-star review.</p>
-  <a href="#" id="btnReview" class="button google-review" role="button" aria-label="Leave a Google review">
+  
+  <p class="message">If you’re happy with our work, please leave us a 5-star review.</p>
+  <a href="#" id="btnReview" class="google-review" role="button" aria-label="Leave a Google review">
     Click here to leave us a review
   </a>
-
-  <p class="message" id="msgFeedback">If you have feedback on how we can improve, we’d love to hear it too!</p>
-  <a href="#" id="btnFeedback" class="button feedback" role="button" aria-label="Send feedback">
+  
+  <p class="message">If you have feedback on how we can improve, we’d love to hear it too!</p>
+  <a href="#" id="btnFeedback" class="feedback" role="button" aria-label="Send feedback">
     Share Your Experience
   </a>
-
+  
   <p id="loading">Logging your response, please wait...</p>
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2k6krPA4-KwL_IMlLU_01b9pRvvWNRHNZB-z7AAEwOcbsN5noNM3k_ZsjzAoLva47/exec";
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLmF52l4w0AZHB_zxFELj33KWgyf58iU0-H81xT3rYqDY2lTLUW9-4P6_E-GL4F0lw/exec";
 
-  // Extract firstname from URL path, e.g. /mark-review → "mark"
-  function getFirstName() {
-    const path = window.location.pathname.toLowerCase();
-    const match = path.match(/^\/([a-z]+)-review$/);
-    if (match && match[1]) {
-      return match[1];
-    }
-    return null;
-  }
-
-  const firstName = getFirstName();
-  const loadingEl = document.getElementById("loading");
-  const btnReview = document.getElementById("btnReview");
-  const btnFeedback = document.getElementById("btnFeedback");
-
-  function logAndRedirect(choice, redirectUrl) {
-    if (!firstName) {
-      alert("Invalid link. No user identified.");
-      return;
+    // Extract ID from URL path, e.g. /mark01-review → "mark01"
+    function getIdFromPath() {
+      const path = window.location.pathname.toLowerCase();
+      const match = path.match(/^\/([a-z0-9]+)-review$/);
+      return match ? match[1] : null;
     }
 
-    loadingEl.style.display = "block";
-    btnReview.style.pointerEvents = "none";
-    btnFeedback.style.pointerEvents = "none";
+    const id = getIdFromPath();
+    const loadingEl = document.getElementById("loading");
+    const btnReview = document.getElementById("btnReview");
+    const btnFeedback = document.getElementById("btnFeedback");
 
-    fetch(`${SCRIPT_URL}?id=${encodeURIComponent(firstName)}&choice=${encodeURIComponent(choice)}`)
-      .then(response => response.json())
-      .then(data => {
-        loadingEl.style.display = "none";
-        if (data.status === "success") {
-          window.location.href = redirectUrl;
-        } else {
-          alert("Sorry, there was an error logging your response: " + data.message);
-          btnReview.style.pointerEvents = "auto";
-          btnFeedback.style.pointerEvents = "auto";
-        }
-      })
-      .catch(() => {
-        loadingEl.style.display = "none";
-        alert("Network error. Please try again.");
-        btnReview.style.pointerEvents = "auto";
-        btnFeedback.style.pointerEvents = "auto";
-      });
-  }
+    function logAndRedirect(action, redirectUrl) {
+      if (!id) {
+        alert("Invalid link. No user identified.");
+        return;
+      }
 
-  btnReview.addEventListener("click", (e) => {
-    e.preventDefault();
-    logAndRedirect("Google", "https://g.page/r/CUWPceUi9tjXEBM/review");
-  });
-
-  btnFeedback.addEventListener("click", (e) => {
-    e.preventDefault();
-    logAndRedirect("Feedback", "https://forms.gle/your-feedback-form-url");
-  });
-</script>
-</body>
-</html>
+      loadingEl.style.display = "block"
