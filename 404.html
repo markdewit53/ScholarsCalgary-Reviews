@@ -1,37 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- [Keep your existing styles] -->
+  <!-- Your existing styles -->
+  <style>
+    /* Keep all your existing CSS */
+  </style>
 </head>
 <body>
-  <!-- [Keep your existing logo and messages] -->
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
   
-  <!-- Replace buttons with forms -->
-  <form id="reviewForm" action="https://script.google.com/macros/s/AKfycbyihziYGZw6ULPtvkLN9VicR30UoPnNWOC33nlh6o8rLzxlnJ5erMoIgE-XEFApZNS4/exec" method="GET" target="_hiddenFrame">
-    <input type="hidden" name="id" id="formId">
-    <input type="hidden" name="choice" value="Review">
-    <button type="submit" class="google-review">Click here to leave us a review</button>
-  </form>
+  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+  <a href="#" id="btnReview" class="google-review">Click here to leave us a review</a>
+  
+  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
+  <a href="#" id="btnFeedback" class="feedback">Share Your Experience</a>
 
-  <form id="feedbackForm" action="https://script.google.com/macros/s/AKfycbyihziYGZw6ULPtvkLN9VicR30UoPnNWOC33nlh6o8rLzxlnJ5erMoIgE-XEFApZNS4/exec" method="GET" target="_hiddenFrame">
-    <input type="hidden" name="id" id="formId2">
-    <input type="hidden" name="choice" value="Feedback">
-    <button type="submit" class="feedback">Share Your Experience</button>
-  </form>
-
-  <!-- Hidden iframe for form submission -->
-  <iframe name="_hiddenFrame" style="display:none;"></iframe>
+  <!-- Hidden iframe for tracking -->
+  <iframe id="trackingFrame" name="trackingFrame" style="display:none;"></iframe>
 
   <script>
-    // Set the ID when page loads
-    document.getElementById('formId').value = getIdFromPath();
-    document.getElementById('formId2').value = getIdFromPath();
-    
+    // Extract ID from URL
     function getIdFromPath() {
       const path = window.location.pathname.toLowerCase();
       const match = path.match(/\/([a-z0-9]+)-review/);
-      return match ? match[1] : 'unknown';
+      return match ? match[1] : null;
     }
+
+    const id = getIdFromPath();
+    
+    // Create tracking URLs
+    function getTrackingUrl(choice) {
+      return `https://script.google.com/macros/s/AKfycbyzfP_o2uuH33Q_DeoButzODZbqUIhGDZt1S-iGsL9dIbIFPDmRA-tuwCy4T3VtZ-7t/exec=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}`;
+    }
+
+    // Button handlers
+    document.getElementById('btnReview').addEventListener('click', function(e) {
+      e.preventDefault();
+      const trackingUrl = getTrackingUrl('Review');
+      document.getElementById('trackingFrame').src = trackingUrl;
+      window.location.href = 'https://g.page/r/CUWPceUi9tjXEBM/review';
+    });
+
+    document.getElementById('btnFeedback').addEventListener('click', function(e) {
+      e.preventDefault();
+      const trackingUrl = getTrackingUrl('Feedback');
+      document.getElementById('trackingFrame').src = trackingUrl;
+      window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    });
   </script>
 </body>
 </html>
