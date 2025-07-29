@@ -5,37 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scholars Calgary Review</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background-color: #f9f9f9; color: #333; }
-    img.logo { display: block; margin: 0 auto 40px auto; max-width: 280px; height: auto; }
-    p.message { font-size: 20px; margin-bottom: 20px; line-height: 1.4; }
-    a { 
-      text-decoration: none; display: inline-block; width: 90%; max-width: 340px; 
-      margin: 12px auto 32px auto; border-radius: 12px; color: white; font-weight: bold; 
-      cursor: pointer; transition: background-color 0.3s ease; padding: 22px 0; font-size: 22px; 
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #f9f9f9;
+      color: #333;
     }
-    a.google-review { background-color: #01549C; }
-    a.google-review:hover { background-color: #013e73; }
-    a.feedback { background-color: #E71F2E; font-size: 20px; padding: 16px 0; margin-top: 0; margin-bottom: 40px; }
-    a.feedback:hover { background-color: #b51a26; }
-    #loading { display: none; margin-top: 20px; font-weight: bold; color: #555; }
-    button:disabled { opacity: 0.7; cursor: not-allowed; }
+    img.logo {
+      display: block;
+      margin: 0 auto 40px auto;
+      max-width: 280px;
+      height: auto;
+    }
+    p.message {
+      font-size: 20px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    a {
+      text-decoration: none;
+      display: inline-block;
+      width: 90%;
+      max-width: 340px;
+      margin: 12px auto 32px auto;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      padding: 22px 0;
+      font-size: 22px;
+      user-select: none;
+    }
+    a.google-review {
+      background-color: #01549C;
+    }
+    a.google-review:hover {
+      background-color: #013e73;
+    }
+    a.feedback {
+      background-color: #E71F2E;
+      font-size: 20px;
+      padding: 16px 0;
+      margin-top: 0;
+      margin-bottom: 40px;
+    }
+    a.feedback:hover {
+      background-color: #b51a26;
+    }
+    #loading {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #555;
+    }
   </style>
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
   
   <p class="message">If you’re happy with our work, please leave us a 5-star review.</p>
-  <button id="btnReview" class="google-review">Click here to leave us a review</button>
+  <a href="#" id="btnReview" class="google-review" role="button" aria-label="Leave a Google review">
+    Click here to leave us a review
+  </a>
   
   <p class="message">If you have feedback on how we can improve, we’d love to hear it too!</p>
-  <button id="btnFeedback" class="feedback">Share Your Experience</button>
+  <a href="#" id="btnFeedback" class="feedback" role="button" aria-label="Send feedback">
+    Share Your Experience
+  </a>
   
   <p id="loading">Logging your response, please wait...</p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMlqpkd9dRubs748J-xFU6kxFQOFibcxUWx7BWffbZHeAPhlZ8mqIf_DxFBXcUq6s/exec";
+    // DEBUG: Confirm script is loading
+    alert("404.html script loaded! Testing ID extraction...");
 
-    // Extract ID from URL path (e.g., /mark01-review → "mark01")
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4t7_nGnouJ9O986KcYv2shW2PHjK1PgcKJ26NsSo1_BY8p79KqC10bix-ls6Qv_M_/exec";
+
+    // Extract ID from URL path, e.g. /mark01-review → "mark01"
     function getIdFromPath() {
       const path = window.location.pathname.toLowerCase();
       const match = path.match(/^\/([a-z0-9]+)-review$/);
@@ -43,53 +91,45 @@
     }
 
     const id = getIdFromPath();
+    console.log("Extracted ID:", id); // Debug ID extraction
+    
     const loadingEl = document.getElementById("loading");
     const btnReview = document.getElementById("btnReview");
     const btnFeedback = document.getElementById("btnFeedback");
 
-    async function logAndRedirect(action, redirectUrl) {
+    function logAndRedirect(action, redirectUrl) {
       if (!id) {
         alert("Invalid link. No user identified.");
         return;
       }
 
-      // Show loading state and disable buttons
       loadingEl.style.display = "block";
-      btnReview.disabled = true;
-      btnFeedback.disabled = true;
 
-      try {
-        // Send data to Google Apps Script
-        const response = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, choice: action }),
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, choice: action }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Logged:", data);
+          window.location.href = redirectUrl;
+        })
+        .catch((error) => {
+          console.error("Logging error:", error);
+          window.location.href = redirectUrl; // Redirect anyway if logging fails
         });
-
-        const result = await response.json();
-        console.log("Log result:", result);
-
-        if (result.status !== "success") {
-          alert("Failed to log response. Please try again.");
-          return;
-        }
-
-        // Redirect only after successful logging
-        window.location.href = redirectUrl;
-      } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-      } finally {
-        // Re-enable buttons if redirect didn't happen
-        btnReview.disabled = false;
-        btnFeedback.disabled = false;
-        loadingEl.style.display = "none";
-      }
     }
 
-    // Attach event listeners
-    btnReview.addEventListener("click", () => logAndRedirect("Review", "https://g.page/r/CUWPceUi9tjXEBM/review"));
-    btnFeedback.addEventListener("click", () => logAndRedirect("Feedback", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+    btnReview.addEventListener("click", (e) => {
+      e.preventDefault();
+      logAndRedirect("Review", "https://g.page/r/CUWPceUi9tjXEBM/review");
+    });
+
+    btnFeedback.addEventListener("click", (e) => {
+      e.preventDefault();
+      logAndRedirect("Feedback Form", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    });
   </script>
 </body>
 </html>
