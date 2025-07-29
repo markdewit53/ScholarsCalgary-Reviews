@@ -1,63 +1,116 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scholars Calgary</title>
+  <title>Scholars Calgary Review</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 60px 20px;
+      padding: 40px 20px;
       background-color: #f9f9f9;
       color: #333;
     }
     img.logo {
+      display: block;
+      margin: 0 auto 40px auto;
       max-width: 280px;
       height: auto;
-      margin-bottom: 40px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
     }
-    h1 {
-      font-weight: 700;
+    p.message {
+      font-size: 20px;
       margin-bottom: 20px;
-      font-size: 32px;
-    }
-    p {
-      font-size: 18px;
       line-height: 1.4;
-      max-width: 600px;
-      margin: 0 auto 40px auto;
     }
-    a.personalized-link {
-      display: inline-block;
-      background-color: #01549C;
-      color: white;
-      padding: 16px 28px;
-      font-size: 18px;
-      border-radius: 12px;
+    a {
       text-decoration: none;
+      display: inline-block;
+      width: 90%;
+      max-width: 340px;
+      margin: 12px auto 32px auto;
+      border-radius: 12px;
+      color: white;
       font-weight: bold;
       cursor: pointer;
       transition: background-color 0.3s ease;
+      padding: 22px 0;
+      font-size: 22px;
+      user-select: none;
     }
-    a.personalized-link:hover {
+    a.google-review {
+      background-color: #01549C;
+    }
+    a.google-review:hover {
       background-color: #013e73;
+    }
+    a.feedback {
+      background-color: #E71F2E;
+      font-size: 20px;
+      padding: 16px 0;
+      margin-top: 0;
+      margin-bottom: 40px;
+    }
+    a.feedback:hover {
+      background-color: #b51a26;
     }
   </style>
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
-  <h1>Welcome to Scholars Calgary</h1>
-  <p>
-    Thank you for being part of Scholars Calgary! To leave a review or share your feedback, please use the personalized link sent to your email.
-  </p>
-  <p>
-    If you haven’t received your personalized link yet, please contact us.
-  </p>
-  <!-- Optional placeholder or link for support -->
-  <a href="mailto:support@scholarscalgary.com" class="personalized-link">Contact Support</a>
+
+  <p class="message">If you’re happy with our work, please leave us a 5-star review.</p>
+  <a
+    class="google-review"
+    href="https://g.page/r/CUWPceUi9tjXEBM/review"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Leave a Google review"
+    >Click here to leave us a review</a
+  >
+
+  <p class="message">If you have feedback on how we can improve, we’d love to hear it too!</p>
+  <a
+    class="feedback"
+    href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Send feedback"
+    >Share Your Experience</a
+  >
+
+  <script>
+    // Helper to get URL query param
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const id = getQueryParam("id");
+    const endpoint =
+      "https://script.google.com/macros/s/AKfycbxxzCw3YINU6egJSac-TnU9-DARpa3rGOBj2ip04-dpDRa4e59yw6zH9sfkHdP0VAjT/exec";
+
+    function logAction(action) {
+      if (!id) {
+        console.warn("Missing id parameter; cannot log action.");
+        return;
+      }
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      })
+        .then((response) => response.text())
+        .then((text) => console.log("Logged:", text))
+        .catch((err) => console.error("Logging error:", err));
+    }
+
+    document
+      .querySelector(".google-review")
+      .addEventListener("click", () => logAction("Review"));
+    document
+      .querySelector(".feedback")
+      .addEventListener("click", () => logAction("Feedback Form"));
+  </script>
 </body>
 </html>
