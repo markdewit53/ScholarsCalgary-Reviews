@@ -98,4 +98,33 @@
         return;
       }
 
-      loadingEl.style.display = "block"
+      loadingEl.style.display = "block";
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, choice: action }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Logged:", data);
+          window.location.href = redirectUrl;
+        })
+        .catch((error) => {
+          console.error("Logging error:", error);
+          window.location.href = redirectUrl; // Redirect anyway if logging fails
+        });
+    }
+
+    btnReview.addEventListener("click", (e) => {
+      e.preventDefault();
+      logAndRedirect("Review", "https://g.page/r/CUWPceUi9tjXEBM/review");
+    });
+
+    btnFeedback.addEventListener("click", (e) => {
+      e.preventDefault();
+      logAndRedirect("Feedback Form", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    });
+  </script>
+</body>
+</html>
