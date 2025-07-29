@@ -23,7 +23,7 @@
       margin-bottom: 20px;
       line-height: 1.4;
     }
-    a {
+    button {
       text-decoration: none;
       display: inline-block;
       width: 90%;
@@ -36,22 +36,26 @@
       transition: background-color 0.3s ease;
       padding: 22px 0;
       font-size: 22px;
-      user-select: none;
+      border: none;
     }
-    a.google-review {
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .google-review {
       background-color: #01549C;
     }
-    a.google-review:hover {
+    .google-review:hover {
       background-color: #013e73;
     }
-    a.feedback {
+    .feedback {
       background-color: #E71F2E;
       font-size: 20px;
       padding: 16px 0;
       margin-top: 0;
       margin-bottom: 40px;
     }
-    a.feedback:hover {
+    .feedback:hover {
       background-color: #b51a26;
     }
     #loading {
@@ -59,10 +63,6 @@
       margin-top: 20px;
       font-weight: bold;
       color: #555;
-    }
-    button:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
     }
   </style>
 </head>
@@ -85,12 +85,12 @@
       });
     }
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXpjchkMFPyJ1tsJOluvDtCrPnpW2RVns9SQlIugrUH2FmAz8_ilZqteeNHGwOWYFl/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTCTCFvm2yx5kIKkKnBiSLx3U9QNojEnF8vMf4t1crHEiymKJv8ny4Bp0oFTMm8Vw_/exec";
 
     // Extract ID from URL path (e.g., /mark01-review → "mark01")
     function getIdFromPath() {
       const path = window.location.pathname.toLowerCase();
-      const match = path.match(/^\/([a-z0-9]+)-review$/);
+      const match = path.match(/\/([a-z0-9]+)-review/);
       return match ? match[1] : null;
     }
 
@@ -112,24 +112,40 @@
       btnFeedback.disabled = true;
 
       try {
-        console.log("Sending data to GAS...");
+        console.log("Attempting to log response...");
+        
+        // Try POST first
         const response = await fetch(SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, choice: action }),
         });
-
+        
         const result = await response.json();
-        console.log("GAS Response:", result);
+        console.log("Server response:", result);
 
         if (result.status === "success") {
           window.location.href = redirectUrl;
         } else {
-          alert("Failed to log: " + result.message);
+          throw new Error(result.message || "Unknown error");
         }
       } catch (error) {
-        console.error("Error:", error);
-        alert("Network error. Please try again.");
+        console.warn("POST failed, falling back to GET:", error);
+        
+        // Fallback to GET if POST fails
+        try {
+          const getResponse = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(action)}`);
+          const getResult = await getResponse.json();
+          
+          if (getResult.status === "success") {
+            window.location.href = redirectUrl;
+          } else {
+            alert("Error: " + (getResult.message || "Failed to log response"));
+          }
+        } catch (getError) {
+          console.error("GET fallback failed:", getError);
+          alert("Network error. Please try again.");
+        }
       } finally {
         btnReview.disabled = false;
         btnFeedback.disabled = false;
