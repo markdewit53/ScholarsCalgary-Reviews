@@ -2,79 +2,149 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scholars Calgary Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leave a Review | Scholars Calgary</title>
   <style>
+    :root {
+      --primary-blue: #01549C;
+      --primary-red: #E71F2E;
+      --hover-blue: #013e73;
+      --hover-red: #b51a26;
+    }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       text-align: center;
-      padding: 40px 20px;
-      background-color: #f9f9f9;
+      padding: 2rem;
+      background-color: #f8f9fa;
       color: #333;
+      line-height: 1.6;
     }
-    img.logo {
-      display: block;
-      margin: 0 auto 40px auto;
-      max-width: 280px;
-      height: auto;
-    }
-    p.message {
-      font-size: 20px;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-    a.button {
-      text-decoration: none;
-      display: inline-block;
-      width: 90%;
-      max-width: 340px;
-      margin: 12px auto 32px auto;
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: white;
       border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .logo {
+      max-width: 220px;
+      height: auto;
+      margin: 0 auto 1.5rem;
+      display: block;
+    }
+    h1 {
+      color: var(--primary-blue);
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 8px;
       color: white;
       font-weight: bold;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease;
-      padding: 22px 0;
-      font-size: 22px;
     }
-    a.google-review {
-      background-color: #01549C;
+    .btn-review {
+      background: var(--primary-blue);
     }
-    a.google-review:hover {
-      background-color: #013e73;
+    .btn-review:hover {
+      background: var(--hover-blue);
+      transform: translateY(-2px);
     }
-    a.feedback {
-      background-color: #E71F2E;
-      font-size: 20px;
-      padding: 16px 0;
-      margin-top: 0;
-      margin-bottom: 40px;
+    .btn-feedback {
+      background: var(--primary-red);
+      padding: 0.8rem;
+      font-size: 0.95rem;
     }
-    a.feedback:hover {
-      background-color: #b51a26;
+    .btn-feedback:hover {
+      background: var(--hover-red);
+      transform: translateY(-2px);
+    }
+    .loading {
+      display: none;
+      margin: 1rem 0;
+      font-style: italic;
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
-  
-  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <a href="https://script.google.com/macros/s/AKfycbz3AvUDf44Q2AqMmKdMwP4bAoNZYh5YCsAGERaVy1OF_WfS_JWed_-UXVESY9BTk2ze/exec?id=mark01&choice=Review" class="button google-review">Click here to leave us a review</a>
-  
-  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
-  <a href="https://script.google.com/macros/s/AKfycbz3AvUDf44Q2AqMmKdMwP4bAoNZYh5YCsAGERaVy1OF_WfS_JWed_-UXVESY9BTk2ze/exec?id=mark01&choice=Feedback" class="button feedback">Share Your Experience</a>
+  <div class="container">
+    <img src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" class="logo">
+    <h1>Share Your Experience</h1>
+    
+    <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+    <a href="#" class="btn btn-review" id="btnReview">Leave a Review</a>
+    
+    <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
+    <a href="#" class="btn btn-feedback" id="btnFeedback">Share Feedback</a>
+    
+    <p class="loading" id="loading">Processing your request...</p>
+  </div>
 
   <script>
-    // Dynamic ID handling
-    document.addEventListener('DOMContentLoaded', function() {
-      const id = window.location.pathname.match(/\/([a-z0-9]+)-review/i)?.[1] || 'unknown';
-      const links = document.querySelectorAll('a.button');
+    // Configuration
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1JvWK-1tq7c73EHVAAb1p-sutdaTDhNDITRPbUVWQjC6YprInXm2aum7Nn8k0NQ/exec";
+    
+    // Get ID from URL path
+    function getIdFromPath() {
+      const path = window.location.pathname;
+      const match = path.match(/\/([a-z0-9]+)-review/i);
+      return match ? match[1] : null;
+    }
+
+    const id = getIdFromPath();
+    const loadingEl = document.getElementById('loading');
+    const btnReview = document.getElementById('btnReview');
+    const btnFeedback = document.getElementById('btnFeedback');
+
+    // Create tracking URL
+    function getTrackingUrl(action) {
+      return `${SCRIPT_URL}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(action)}`;
+    }
+
+    // Handle button clicks
+    function handleClick(action, redirectUrl) {
+      if (!id) {
+        alert('Invalid review link');
+        return;
+      }
+
+      loadingEl.style.display = 'block';
       
-      links.forEach(link => {
-        const url = new URL(link.href);
-        url.searchParams.set('id', id);
-        link.href = url.toString();
-      });
+      // Create hidden iframe to trigger tracking
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = getTrackingUrl(action);
+      document.body.appendChild(iframe);
+      
+      // Redirect after short delay to ensure tracking
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 300);
+    }
+
+    // Assign click handlers
+    btnReview.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleClick('Review', 'https://g.page/r/CUWPceUi9tjXEBM/review');
+    });
+
+    btnFeedback.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleClick('Feedback', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     });
   </script>
 </body>
