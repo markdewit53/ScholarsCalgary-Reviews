@@ -60,30 +60,34 @@
       font-weight: bold;
       color: #555;
     }
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
   
-  <p class="message">If you’re happy with our work, please leave us a 5-star review.</p>
-  <a href="#" id="btnReview" class="google-review" role="button" aria-label="Leave a Google review">
-    Click here to leave us a review
-  </a>
+  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+  <button id="btnReview" class="google-review">Click here to leave us a review</button>
   
-  <p class="message">If you have feedback on how we can improve, we’d love to hear it too!</p>
-  <a href="#" id="btnFeedback" class="feedback" role="button" aria-label="Send feedback">
-    Share Your Experience
-  </a>
+  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
+  <button id="btnFeedback" class="feedback">Share Your Experience</button>
   
   <p id="loading">Logging your response, please wait...</p>
 
   <script>
-    // DEBUG: Confirm script is loading
-    alert("404.html script loaded! Testing ID extraction...");
+    // Unregister any interfering service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      });
+    }
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4t7_nGnouJ9O986KcYv2shW2PHjK1PgcKJ26NsSo1_BY8p79KqC10bix-ls6Qv_M_/exec";
 
-    // Extract ID from URL path, e.g. /mark01-review → "mark01"
+    // Extract ID from URL path (e.g., /mark01-review → "mark01")
     function getIdFromPath() {
       const path = window.location.pathname.toLowerCase();
       const match = path.match(/^\/([a-z0-9]+)-review$/);
@@ -91,45 +95,51 @@
     }
 
     const id = getIdFromPath();
-    console.log("Extracted ID:", id); // Debug ID extraction
-    
+    console.log("Extracted ID:", id);
     const loadingEl = document.getElementById("loading");
     const btnReview = document.getElementById("btnReview");
     const btnFeedback = document.getElementById("btnFeedback");
 
-    function logAndRedirect(action, redirectUrl) {
+    async function logAndRedirect(action, redirectUrl) {
       if (!id) {
         alert("Invalid link. No user identified.");
         return;
       }
 
+      // Show loading state and disable buttons
       loadingEl.style.display = "block";
+      btnReview.disabled = true;
+      btnFeedback.disabled = true;
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, choice: action }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Logged:", data);
-          window.location.href = redirectUrl;
-        })
-        .catch((error) => {
-          console.error("Logging error:", error);
-          window.location.href = redirectUrl; // Redirect anyway if logging fails
+      try {
+        console.log("Sending data to GAS...");
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, choice: action }),
         });
+
+        const result = await response.json();
+        console.log("GAS Response:", result);
+
+        if (result.status === "success") {
+          window.location.href = redirectUrl;
+        } else {
+          alert("Failed to log: " + result.message);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Network error. Please try again.");
+      } finally {
+        btnReview.disabled = false;
+        btnFeedback.disabled = false;
+        loadingEl.style.display = "none";
+      }
     }
 
-    btnReview.addEventListener("click", (e) => {
-      e.preventDefault();
-      logAndRedirect("Review", "https://g.page/r/CUWPceUi9tjXEBM/review");
-    });
-
-    btnFeedback.addEventListener("click", (e) => {
-      e.preventDefault();
-      logAndRedirect("Feedback Form", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-    });
+    // Attach event listeners
+    btnReview.addEventListener("click", () => logAndRedirect("Review", "https://g.page/r/CUWPceUi9tjXEBM/review"));
+    btnFeedback.addEventListener("click", () => logAndRedirect("Feedback", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
   </script>
 </body>
 </html>
