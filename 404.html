@@ -68,10 +68,14 @@
     const reviewUrl = 'https://g.page/r/CUWPceUi9tjXEBM/review';
     const feedbackUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
+    function sendLoggingRequest(url) {
+      const img = new Image();
+      img.src = url;
+    }
+
     function logAndRedirect(choice, redirectUrl) {
       const id = getUserId();
-      fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`, {mode: 'no-cors'})
-        .catch(() => {});
+      sendLoggingRequest(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`);
       window.location.href = redirectUrl;
     }
 
