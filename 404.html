@@ -1,68 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leave Us a Review</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-    .logo {
-      width: 150px;
-      margin-bottom: 20px;
-    }
-    .message {
-      font-size: 1.2em;
-      margin: 20px 0;
-    }
-    .review-btn, .feedback-btn {
-      display: inline-block;
-      margin: 10px;
-      padding: 12px 24px;
-      font-size: 1em;
-      text-decoration: none;
-      border-radius: 5px;
-      color: white;
-    }
-    .review-btn {
-      background-color: #008080;
-    }
-    .review-btn:hover {
-      background-color: #006666;
-    }
-    .feedback-btn {
-      background-color: #d4222a;
-    }
-    .feedback-btn:hover {
-      background-color: #b51a26;
-    }
-  </style>
-</head>
-<body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
-  
-  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <a href="https://g.page/r/CUWPceUi9tjXEBM/review" 
-     class="review-btn" 
-     onclick="logClick('mark01', 'Review')">Click here to leave us a review</a>
+<a href="https://g.page/r/CUWPceUi9tjXEBM/review" class="review-btn">Leave a Review</a>
+<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="feedback-btn">Share Feedback</a>
 
-  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
-  <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
-     class="feedback-btn" 
-     onclick="logClick('mark01', 'Feedback')">Share Your Experience</a>
+<script>
+  // Get user ID dynamically from URL path or fallback
+  function getUserId() {
+    const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
+    return match ? match[1] : 'unknown';
+  }
 
-  <script>
-    function logClick(id, choice) {
-      const url = `https://script.google.com/macros/s/AKfycbzZSq7egqtOii-KwoQ0n0dOUP3ZRl7giVFIq-H8fbNdRMpPu00vOWAyZMlxB0npTqYw/exec?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`;
-      
-      // Fire and forget logging (Safari-safe)
-      fetch(url, { mode: 'no-cors' }).catch(err => {
-        console.warn("Logging failed:", err);
-      });
-    }
-  </script>
-</body>
-</html>
+  const scriptUrl = 'https://script.google.com/macros/s/AKfycbzZSq7egqtOii-KwoQ0n0dOUP3ZRl7giVFIq-H8fbNdRMpPu00vOWAyZMlxB0npTqYw/exec';
+
+  document.querySelector('.review-btn').addEventListener('click', function(e) {
+    const id = getUserId();
+    fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review&cb=${Date.now()}`, {mode: 'no-cors'}).catch(() => {});
+    // Let the click proceed to href immediately
+  });
+
+  document.querySelector('.feedback-btn').addEventListener('click', function(e) {
+    const id = getUserId();
+    fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Feedback&cb=${Date.now()}`, {mode: 'no-cors'}).catch(() => {});
+    // Let the click proceed to href immediately
+  });
+</script>
