@@ -1,24 +1,91 @@
-<a href="https://g.page/r/CUWPceUi9tjXEBM/review" class="review-btn">Leave a Review</a>
-<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="feedback-btn">Share Feedback</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scholars Review & Feedback</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .logo {
+      width: 150px;
+      margin-bottom: 30px;
+    }
+    .message {
+      font-size: 1.3em;
+      margin: 30px 0 15px;
+    }
+    .review-btn, .feedback-btn {
+      display: inline-block;
+      margin: 15px 12px;
+      padding: 18px 36px;
+      font-size: 1.25em;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      border: none;
+    }
+    .review-btn {
+      background-color: #008080;
+    }
+    .review-btn:hover, .review-btn:focus {
+      background-color: #006666;
+    }
+    .feedback-btn {
+      background-color: #d4222a;
+    }
+    .feedback-btn:hover, .feedback-btn:focus {
+      background-color: #b51a26;
+    }
+  </style>
+</head>
+<body>
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
 
-<script>
-  // Get user ID dynamically from URL path or fallback
-  function getUserId() {
-    const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
-    return match ? match[1] : 'unknown';
-  }
+  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+  <button class="review-btn" type="button">Click here to leave us a review</button>
 
-  const scriptUrl = 'https://script.google.com/macros/s/AKfycbzZSq7egqtOii-KwoQ0n0dOUP3ZRl7giVFIq-H8fbNdRMpPu00vOWAyZMlxB0npTqYw/exec';
+  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
+  <button class="feedback-btn" type="button">Share Your Experience</button>
 
-  document.querySelector('.review-btn').addEventListener('click', function(e) {
-    const id = getUserId();
-    fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review&cb=${Date.now()}`, {mode: 'no-cors'}).catch(() => {});
-    // Let the click proceed to href immediately
-  });
+  <script>
+    // Extract the user ID from the URL path (e.g. /mark01-review)
+    function getUserId() {
+      const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
+      return match ? match[1] : 'unknown';
+    }
 
-  document.querySelector('.feedback-btn').addEventListener('click', function(e) {
-    const id = getUserId();
-    fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Feedback&cb=${Date.now()}`, {mode: 'no-cors'}).catch(() => {});
-    // Let the click proceed to href immediately
-  });
-</script>
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzZSq7egqtOii-KwoQ0n0dOUP3ZRl7giVFIq-H8fbNdRMpPu00vOWAyZMlxB0npTqYw/exec';
+
+    // URLs to redirect after logging
+    const reviewUrl = 'https://g.page/r/CUWPceUi9tjXEBM/review';
+    const feedbackUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+
+    // Utility to log the click and then redirect
+    function logAndRedirect(choice, redirectUrl) {
+      const id = getUserId();
+      fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`, {mode: 'no-cors'})
+        .catch(() => { /* ignore errors */ });
+      // Redirect immediately
+      window.location.href = redirectUrl;
+    }
+
+    document.querySelector('.review-btn').addEventListener('click', () => {
+      logAndRedirect('Review', reviewUrl);
+    });
+
+    document.querySelector('.feedback-btn').addEventListener('click', () => {
+      logAndRedirect('Feedback', feedbackUrl);
+    });
+  </script>
+</body>
+</html>
