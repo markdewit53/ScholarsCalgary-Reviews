@@ -35,16 +35,16 @@
       border: none;
     }
     .review-btn {
-      background-color: #008080;
+      background-color: #01549C;
     }
     .review-btn:hover, .review-btn:focus {
-      background-color: #006666;
+      background-color: #013F70;
     }
     .feedback-btn {
-      background-color: #d4222a;
+      background-color: #E71F2E;
     }
     .feedback-btn:hover, .feedback-btn:focus {
-      background-color: #b51a26;
+      background-color: #B01724;
     }
   </style>
 </head>
@@ -58,7 +58,6 @@
   <button class="feedback-btn" type="button">Share Your Experience</button>
 
   <script>
-    // Extract the user ID from the URL path (e.g. /mark01-review)
     function getUserId() {
       const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
       return match ? match[1] : 'unknown';
@@ -66,16 +65,13 @@
 
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbzZSq7egqtOii-KwoQ0n0dOUP3ZRl7giVFIq-H8fbNdRMpPu00vOWAyZMlxB0npTqYw/exec';
 
-    // URLs to redirect after logging
     const reviewUrl = 'https://g.page/r/CUWPceUi9tjXEBM/review';
     const feedbackUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
-    // Utility to log the click and then redirect
     function logAndRedirect(choice, redirectUrl) {
       const id = getUserId();
       fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`, {mode: 'no-cors'})
-        .catch(() => { /* ignore errors */ });
-      // Redirect immediately
+        .catch(() => {});
       window.location.href = redirectUrl;
     }
 
