@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scholars Review</title>
+  <title>Redirecting... | Scholars Calgary</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,8 +11,6 @@
       padding: 40px 20px;
       background-color: #f9f9f9;
       color: #333;
-      max-width: 600px;
-      margin: 0 auto;
     }
     .logo {
       width: 250px;
@@ -21,7 +19,6 @@
     .message {
       font-size: 1.3em;
       margin: 30px 0 15px;
-      line-height: 1.5;
     }
     .btn-container {
       display: flex;
@@ -69,58 +66,66 @@
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
-
-  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  
-  <div class="btn-container">
-    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+  <div id="content">
+    <p class="message">Taking you to our review page...</p>
     <div id="loadingSpinner">⏳ Loading...</div>
-  </div>
-
-  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
-  
-  <div class="btn-container">
-    <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
   </div>
 
   <script>
     // Configuration
-    const config = {
-      gasUrl: "https://script.google.com/macros/s/AKfycbzsRjHS-juByAeDk--WIbd0gPXQ-mEWZLZee3_OV9ZvhoISqCJ-6y3Nn8SRMqZq5Dvb/exec",
-      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA",
-      reviewUrls: {
-        ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
-        CW: "https://g.page/r/CUWPceUi9tjXEBM/review"
-      }
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzsRjHS-juByAeDk--WIbd0gPXQ-mEWZLZee3_OV9ZvhoISqCJ-6y3Nn8SRMqZq5Dvb/exec";
+    const REVIEW_URLS = {
+      ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
+      CW: "https://g.page/r/CUWPceUi9tjXEBM/review"
     };
+    const FEEDBACK_URL = "https://forms.gle/7M9bViSeiCjKa3WcA";
 
-    // Get URL parameters
+    // Extract ML/CW and ID from URL (e.g., /ML/annalisa)
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const type = pathParts[0]; // 'ML' or 'CW'
-    const userId = pathParts[1]; // 'annalisa', 'marky', etc.
+    const userId = pathParts[1]; // 'annalisa', 'mark01', etc.
 
-    // Track interaction
-    function track(action) {
-      fetch(`${config.gasUrl}?id=${userId}&action=${action}&type=${type}`, {
-        mode: 'no-cors'
-      }).catch(e => console.log('Tracking sent'));
+    // Show landing page if valid URL
+    if (['ML', 'CW'].includes(type) && userId) {
+      document.getElementById('content').innerHTML = `
+        <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+        <div class="btn-container">
+          <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+          <div id="loadingSpinner">⏳ Loading...</div>
+        </div>
+        <p class="message">If you have feedback, we'd love to hear it!</p>
+        <div class="btn-container">
+          <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
+        </div>
+      `;
+
+      // Set up button handlers
+      document.getElementById('reviewBtn').addEventListener('click', () => {
+        document.getElementById('loadingSpinner').style.display = 'block';
+        trackInteraction('review');
+        window.location.href = REVIEW_URLS[type];
+      });
+
+      document.getElementById('feedbackBtn').addEventListener('click', () => {
+        trackInteraction('feedback');
+        window.location.href = FEEDBACK_URL;
+      });
+
+      // Track pageview
+      trackInteraction('pageview');
+    } else {
+      document.getElementById('content').innerHTML = `
+        <p class="message">Invalid link. Please check the URL and try again.</p>
+      `;
     }
 
-    // Handle review click
-    document.getElementById('reviewBtn').addEventListener('click', () => {
-      document.getElementById('loadingSpinner').style.display = 'block';
-      track('review');
-      window.location.href = config.reviewUrls[type];
-    });
-
-    // Handle feedback click
-    document.getElementById('feedbackBtn').addEventListener('click', () => {
-      track('feedback');
-      window.location.href = config.feedbackUrl;
-    });
-
-    // Track pageview
-    track('pageview');
+    // Send tracking data to GAS
+    function trackInteraction(action) {
+      fetch(`${GAS_URL}?id=${encodeURIComponent(userId)}&action=${action}&type=${type}`, {
+        mode: 'no-cors',
+        cache: 'no-store'
+      }).catch(e => console.log('Tracking sent'));
+    }
   </script>
 </body>
 </html>
