@@ -51,77 +51,111 @@
       font-size: 1em;
       color: #01549C;
     }
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
 
   <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+  <div class="btn-container">
+    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+    <div id="loadingSpinner">⏳ Loading...</div>
+  </div>
 
   <p class="message">If you have feedback, we'd love to hear it!</p>
   <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
 
-  <div id="loadingSpinner">⏳ Loading...</div>
-
   <script>
-    // Configuration
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbwZE_EW2VWtiKY0eQBkoY5R4JVZ2ss-SUlNLBku0qKrrygCMheJ67sC4duCSf7_etpNtw/exec"; // 👈 Replace after GAS deployment
-    const feedbackUrl = "https://forms.gle/7M9bViSeiCjKa3WcA";   // Replace if needed
+    // Configuration - REPLACE WITH YOUR ACTUAL URLS
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbzS-WhFeA4IqJ4adaCK51UKvfbSxlg4UB77RGx1U5Z142SGWnFkbC85iQ5LjKMMNFF71g/exec"; // From new deployment
+    const feedbackUrl = "https://forms.gle/7M9bViSeiCjKa3WcA"; // Your feedback form
 
-    // Get user ID from URL (e.g., "/abc123-review" => "abc123")
+    // Get user ID from URL
     function getUserId() {
       const pathMatch = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
-      return pathMatch ? pathMatch[1] : 'unknown';
+      return pathMatch ? pathMatch[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
     }
 
-    // Preload the correct review link on page load
-    let preloadedReviewUrl = null;
-    async function preloadReview() {
+    // Preload the review link silently
+    function preloadReviewLink() {
       const id = getUserId();
-      try {
-        const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review&redirect=noop`);
-        const data = await response.json();
-        if (data.success) {
-          preloadedReviewUrl = data.reviewUrl;
-          console.log("Preloaded review URL:", preloadedReviewUrl);
-        }
-      } catch (error) {
-        console.error("Preload failed (will fetch on click):", error);
-      }
+      const preloadUrl = `${scriptUrl}?endpoint=preload&id=${encodeURIComponent(id)}&_=${Date.now()}`;
+      
+      // Use no-cors and ignore errors
+      fetch(preloadUrl, {
+        mode: 'no-cors',
+        cache: 'no-store'
+      }).catch(() => {
+        console.log("Preload failed silently - will load on click");
+      });
     }
 
     // Handle review button click
     async function handleReviewClick() {
+      const btn = document.getElementById('reviewBtn');
       const spinner = document.getElementById('loadingSpinner');
+      const id = getUserId();
+      
+      btn.disabled = true;
       spinner.style.display = 'block';
 
       try {
-        if (preloadedReviewUrl) {
-          window.location.href = preloadedReviewUrl; // Instant redirect
-        } else {
-          // Fallback: Fetch fresh if preload failed
-          const id = getUserId();
-          const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review&redirect=noop`);
-          const data = await response.json();
-          if (data.success) {
-            window.location.href = data.reviewUrl;
+        // Try to use preloaded URL first
+        const preloadCheck = await checkPreload(id);
+        if (preloadCheck.success) {
+          window.location.href = preloadCheck.url;
+          return;
+        }
+
+        // Fallback to normal flow
+        const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review`);
+        if (response.ok) {
+          const text = await response.text();
+          if (text.includes("Redirecting")) {
+            window.location.href = "https://g.page/r/CUo-0tq7WzhQEBM/review"; // Default ML URL
           } else {
-            alert("Error: Could not load review link. Please try again.");
+            throw new Error("ID not found");
           }
+        } else {
+          throw new Error("Network error");
         }
       } catch (error) {
-        alert("Network error. Please check your connection.");
+        alert("Please try again in a moment. If the problem persists, contact support.");
+        console.error("Redirect error:", error);
       } finally {
+        btn.disabled = false;
         spinner.style.display = 'none';
       }
     }
 
+    // Check for preloaded data (simplified)
+    async function checkPreload(id) {
+      try {
+        const response = await fetch(`${scriptUrl}?endpoint=preload&id=${encodeURIComponent(id)}`);
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (e) {
+        console.log("Preload check failed", e);
+      }
+      return { success: false };
+    }
+
     // Initialize
-    document.addEventListener('DOMContentLoaded', preloadReview);
-    document.getElementById('reviewBtn').addEventListener('click', handleReviewClick);
-    document.getElementById('feedbackBtn').addEventListener('click', () => {
-      window.location.href = feedbackUrl;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Start preloading immediately
+      preloadReviewLink();
+      
+      // Set up event listeners
+      document.getElementById('reviewBtn').addEventListener('click', handleReviewClick);
+      document.getElementById('feedbackBtn').addEventListener('click', () => {
+        window.location.href = feedbackUrl;
+      });
     });
   </script>
 </body>
