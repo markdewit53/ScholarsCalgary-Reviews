@@ -37,13 +37,13 @@
     .review-btn {
       background-color: #01549C;
     }
-    .review-btn:hover, .review-btn:focus {
+    .review-btn:hover {
       background-color: #013F70;
     }
     .feedback-btn {
       background-color: #E71F2E;
     }
-    .feedback-btn:hover, .feedback-btn:focus {
+    .feedback-btn:hover {
       background-color: #B01724;
     }
   </style>
@@ -52,42 +52,45 @@
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
 
   <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <button class="review-btn" type="button">Click here to leave us a review</button>
+  <button class="review-btn">Click here to leave us a review</button>
 
-  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
-  <button class="feedback-btn" type="button">Share Your Experience</button>
+  <p class="message">If you have feedback, we'd love to hear it!</p>
+  <button class="feedback-btn">Share Your Experience</button>
 
   <script>
     function getUserId() {
-      const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
-      return match ? match[1] : 'unknown';
+      const pathMatch = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
+      return pathMatch ? pathMatch[1] : 'unknown';
     }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbzrYU2rZbzvpU0TmBgkYEjh6wSnUDgym8oR1DzTIFOU4KIeHlt-yK73o9vrqeYI3Yuy/exec";
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbzupRHb1-ENBOFzbgF5M12SFgNLxIazaWryqOg9-OuEx63KCqR58WxVzkPuJrSMoqAiTg/exec"; // 👈 Update after GAS deployment
+    const feedbackUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Replace if needed
 
-    const reviewUrl = 'https://g.page/r/CUWPceUi9tjXEBM/review';
-    const feedbackUrl = 'https://forms.gle/v5bwBt1HZPwfF1ny8';
-
-    function sendLoggingRequest(url) {
-      return fetch(url, {mode: 'no-cors'}).catch(() => {
-        const img = new Image();
-        img.src = url;
-      });
-    }
-
-    function logAndRedirect(choice, redirectUrl) {
+    async function logAndRedirect(choice) {
       const id = getUserId();
-      sendLoggingRequest(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}&cb=${Date.now()}`);
-      window.location.href = redirectUrl;
+      const url = `${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.success) {
+          if (choice === 'Review' && data.reviewUrl) {
+            window.location.href = data.reviewUrl; // Dynamic review link
+          } else if (choice === 'Feedback') {
+            window.location.href = feedbackUrl; // Static feedback link
+          }
+        } else {
+          alert(data.message || "Error: Could not process your request.");
+        }
+      } catch (error) {
+        alert("Network error. Please try again.");
+        console.error("Fetch failed:", error);
+      }
     }
 
-    document.querySelector('.review-btn').addEventListener('click', () => {
-      logAndRedirect('Review', reviewUrl);
-    });
-
-    document.querySelector('.feedback-btn').addEventListener('click', () => {
-      logAndRedirect('Feedback', feedbackUrl);
-    });
+    document.querySelector('.review-btn').addEventListener('click', () => logAndRedirect('Review'));
+    document.querySelector('.feedback-btn').addEventListener('click', () => logAndRedirect('Feedback'));
   </script>
 </body>
 </html>
