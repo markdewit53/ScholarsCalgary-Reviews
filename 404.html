@@ -1,161 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scholars Review & Feedback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scholars Review</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 40px 20px;
       background-color: #f9f9f9;
-      color: #333;
     }
     .logo {
       width: 250px;
       margin-bottom: 30px;
     }
-    .message {
-      font-size: 1.3em;
-      margin: 30px 0 15px;
-    }
-    .review-btn, .feedback-btn {
-      display: inline-block;
-      margin: 15px 12px;
-      padding: 18px 36px;
-      font-size: 1.25em;
-      font-weight: bold;
-      text-decoration: none;
-      border-radius: 8px;
+    .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      border: none;
       color: white;
       cursor: pointer;
-      border: none;
-      transition: background-color 0.3s;
+      margin: 10px;
     }
     .review-btn {
       background-color: #01549C;
     }
-    .review-btn:hover {
-      background-color: #013F70;
-    }
     .feedback-btn {
       background-color: #E71F2E;
     }
-    .feedback-btn:hover {
-      background-color: #B01724;
-    }
-    #loadingSpinner {
+    #spinner {
       display: none;
-      margin-top: 10px;
-      font-size: 1em;
-      color: #01549C;
-    }
-    .btn-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
-
-  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <div class="btn-container">
-    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
-    <div id="loadingSpinner">⏳ Loading...</div>
-  </div>
-
-  <p class="message">If you have feedback, we'd love to hear it!</p>
-  <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
+  
+  <button id="reviewBtn" class="btn review-btn">Leave a Review</button>
+  <button id="feedbackBtn" class="btn feedback-btn">Give Feedback</button>
+  
+  <div id="spinner">⏳ Loading...</div>
 
   <script>
-    // Configuration - REPLACE WITH YOUR ACTUAL URLS
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbzS-WhFeA4IqJ4adaCK51UKvfbSxlg4UB77RGx1U5Z142SGWnFkbC85iQ5LjKMMNFF71g/exec"; // From new deployment
-    const feedbackUrl = "https://forms.gle/7M9bViSeiCjKa3WcA"; // Your feedback form
+    // Configuration
+    const config = {
+      gasUrl: "https://script.google.com/macros/s/AKfycbyMV5eRqLSPKepecbGzMGL62KWpuA9Gxoy2Wvou13z1EdL7tVCfu3bFKmuBsDtci-i9Pw/exec",
+      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA",
+      reviewUrls: {
+        ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
+        CW: "https://g.page/r/CUWPceUi9tjXEBM/review"
+      }
+    };
 
     // Get user ID from URL
     function getUserId() {
-      const pathMatch = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
-      return pathMatch ? pathMatch[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
+      const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
+      return match ? match[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
     }
 
-    // Preload the review link silently
-    function preloadReviewLink() {
-      const id = getUserId();
-      const preloadUrl = `${scriptUrl}?endpoint=preload&id=${encodeURIComponent(id)}&_=${Date.now()}`;
+    // Fast-track review redirect
+    async function handleReview() {
+      const userId = getUserId();
+      const spinner = document.getElementById('spinner');
+      const reviewBtn = document.getElementById('reviewBtn');
       
-      // Use no-cors and ignore errors
-      fetch(preloadUrl, {
-        mode: 'no-cors',
-        cache: 'no-store'
-      }).catch(() => {
-        console.log("Preload failed silently - will load on click");
-      });
-    }
-
-    // Handle review button click
-    async function handleReviewClick() {
-      const btn = document.getElementById('reviewBtn');
-      const spinner = document.getElementById('loadingSpinner');
-      const id = getUserId();
-      
-      btn.disabled = true;
+      // Show loading state
+      reviewBtn.disabled = true;
       spinner.style.display = 'block';
-
+      
       try {
-        // Try to use preloaded URL first
-        const preloadCheck = await checkPreload(id);
-        if (preloadCheck.success) {
-          window.location.href = preloadCheck.url;
-          return;
-        }
-
-        // Fallback to normal flow
-        const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review`);
-        if (response.ok) {
-          const text = await response.text();
-          if (text.includes("Redirecting")) {
-            window.location.href = "https://g.page/r/CUo-0tq7WzhQEBM/review"; // Default ML URL
-          } else {
-            throw new Error("ID not found");
-          }
-        } else {
-          throw new Error("Network error");
-        }
+        // 1. Immediately redirect to most likely URL (ML)
+        let reviewUrl = config.reviewUrls.ML;
+        window.location.href = reviewUrl;
+        
+        // 2. Log the click in background (no waiting)
+        fetch(`${config.gasUrl}?mode=track&id=${userId}&choice=Review`, {
+          method: 'GET',
+          mode: 'no-cors'
+        }).catch(e => console.log("Tracking completed in background"));
+        
       } catch (error) {
-        alert("Please try again in a moment. If the problem persists, contact support.");
         console.error("Redirect error:", error);
-      } finally {
-        btn.disabled = false;
         spinner.style.display = 'none';
+        reviewBtn.disabled = false;
+        alert("Please try again. If the problem persists, contact support.");
       }
-    }
-
-    // Check for preloaded data (simplified)
-    async function checkPreload(id) {
-      try {
-        const response = await fetch(`${scriptUrl}?endpoint=preload&id=${encodeURIComponent(id)}`);
-        if (response.ok) {
-          return await response.json();
-        }
-      } catch (e) {
-        console.log("Preload check failed", e);
-      }
-      return { success: false };
     }
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      // Start preloading immediately
-      preloadReviewLink();
-      
-      // Set up event listeners
-      document.getElementById('reviewBtn').addEventListener('click', handleReviewClick);
-      document.getElementById('feedbackBtn').addEventListener('click', () => {
-        window.location.href = feedbackUrl;
-      });
+    document.getElementById('reviewBtn').addEventListener('click', handleReview);
+    document.getElementById('feedbackBtn').addEventListener('click', () => {
+      window.location.href = config.feedbackUrl;
     });
   </script>
 </body>
