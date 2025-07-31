@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting... | Scholars Calgary</title>
+  <title>Scholars Review</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,69 +13,109 @@
       color: #333;
     }
     .logo {
-      width: 200px;
+      width: 250px;
       margin-bottom: 30px;
     }
     .message {
-      font-size: 1.2em;
-      margin: 20px 0;
+      font-size: 1.3em;
+      margin: 30px 0 15px;
     }
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border-left-color: #01549C;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 6px;
+      color: white;
+      text-decoration: none;
+      margin: 10px;
+      transition: all 0.3s;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .review-btn {
+      background-color: #01549C;
+    }
+    .review-btn:hover {
+      background-color: #013F70;
+      transform: translateY(-2px);
+    }
+    .feedback-btn {
+      background-color: #E71F2E;
+    }
+    .feedback-btn:hover {
+      background-color: #B01724;
+      transform: translateY(-2px);
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
-  <div class="message">Taking you to our review page...</div>
-  <div class="spinner"></div>
+  <!-- Dynamic content will be inserted here -->
+  <div id="content">
+    <div class="spinner"></div>
+  </div>
 
   <script>
     // Configuration
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxjbkY4VTbq4xzNLY5alfz3z_kuDZ-6HDKOZL13llQyp6bpArN57VO7COCzN611qORU/exec";
-    const DEFAULT_REVIEW_URL = "https://g.page/r/CUo-0tq7WzhQEBM/review";
-    const TRACKING_DELAY = 300; // ms before redirect (allows GAS to start processing)
+    const config = {
+      reviewUrls: {
+        ML: 'https://g.page/r/CUo-0tq7WzhQEBM/review',
+        CW: 'https://g.page/r/CUWPceUi9tjXEBM/review'
+      },
+      feedbackUrl: 'https://forms.gle/7M9bViSeiCjKa3WcA',
+      gasTrackingUrl: 'https://script.google.com/macros/s/AKfycbxjbkY4VTbq4xzNLY5alfz3z_kuDZ-6HDKOZL13llQyp6bpArN57VO7COCzN611qORU/exec'
+    };
 
-    // Extract ID from URL (/marky-review → "marky")
-    function getUserId() {
-      const path = window.location.pathname;
-      const match = path.match(/\/([a-z0-9]+)-review/i);
-      return match ? match[1].toLowerCase() : null;
+    // Extract ML/CW and ID from URL
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const type = pathParts[0]; // 'ML' or 'CW'
+    const userId = pathParts[1]; // 'annalisa', 'marky', etc.
+
+    // Show appropriate landing page
+    function showLandingPage() {
+      const content = `
+        <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
+        <p class="message">${type === 'ML' 
+          ? "Thank you for choosing Scholars!" 
+          : "We appreciate your feedback!"}</p>
+        <a href="${config.reviewUrls[type]}" class="btn review-btn" id="reviewBtn">
+          Leave a Review
+        </a>
+        <a href="${config.feedbackUrl}" class="btn feedback-btn">
+          Share Feedback
+        </a>
+      `;
+      document.getElementById('content').innerHTML = content;
+      
+      // Track the pageview
+      trackInteraction('pageview');
+      
+      // Track review button clicks
+      document.getElementById('reviewBtn')?.addEventListener('click', () => {
+        trackInteraction('review_click');
+      });
     }
 
-    // Start tracking (fires and forgets)
-    function trackUser(id) {
-      // Send to Google Apps Script
-      fetch(`${GAS_URL}?id=${encodeURIComponent(id)}`, {
+    // Send tracking data to GAS
+    function trackInteraction(action) {
+      const data = {
+        type: type,
+        id: userId,
+        action: action,
+        timestamp: new Date().toISOString()
+      };
+      
+      fetch(`${config.gasTrackingUrl}?data=${encodeURIComponent(JSON.stringify(data))}`, {
         mode: 'no-cors',
         cache: 'no-store'
-      }).catch(e => console.log("Tracking sent"));
+      }).catch(e => console.log('Tracking sent'));
     }
 
-    // Main flow
-    const userId = getUserId();
-    if (userId) {
-      // 1. Start tracking immediately (no waiting)
-      trackUser(userId);
-
-      // 2. Redirect after brief delay (allows tracking to initiate)
-      setTimeout(() => {
-        window.location.href = DEFAULT_REVIEW_URL;
-      }, TRACKING_DELAY);
+    // Initialize
+    if (['ML', 'CW'].includes(type) && userId) {
+      showLandingPage();
     } else {
-      // Invalid URL format
-      document.querySelector('.message').textContent = "Page not found. Please check your link.";
-      document.querySelector('.spinner').style.display = 'none';
+      document.getElementById('content').innerHTML = `
+        <p>Invalid link. Please check the URL and try again.</p>
+      `;
     }
   </script>
 </body>
