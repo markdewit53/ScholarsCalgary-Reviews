@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scholars Review & Feedback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting... | Scholars Calgary</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,151 +11,72 @@
       padding: 40px 20px;
       background-color: #f9f9f9;
       color: #333;
-      max-width: 600px;
-      margin: 0 auto;
     }
     .logo {
-      width: 250px;
+      width: 200px;
       margin-bottom: 30px;
     }
     .message {
-      font-size: 1.3em;
-      margin: 30px 0 15px;
-      line-height: 1.5;
-    }
-    .btn-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      margin: 25px 0;
-    }
-    .review-btn, .feedback-btn {
-      display: block;
-      width: 100%;
-      max-width: 300px;
-      padding: 16px 32px;
-      font-size: 1.1em;
-      font-weight: bold;
-      text-decoration: none;
-      border-radius: 8px;
-      color: white;
-      cursor: pointer;
-      border: none;
-      transition: all 0.3s ease;
-      box-sizing: border-box;
-    }
-    .review-btn {
-      background-color: #01549C;
-    }
-    .review-btn:hover {
-      background-color: #013F70;
-      transform: translateY(-2px);
-    }
-    .feedback-btn {
-      background-color: #E71F2E;
-    }
-    .feedback-btn:hover {
-      background-color: #B01724;
-      transform: translateY(-2px);
-    }
-    #loadingSpinner {
-      display: none;
+      font-size: 1.2em;
       margin: 20px 0;
-      font-size: 1.1em;
-      color: #01549C;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #01549C;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
-
-  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  
-  <div class="btn-container">
-    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
-    <div id="loadingSpinner">⏳ Loading...</div>
-  </div>
-
-  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
-  
-  <div class="btn-container">
-    <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
-  </div>
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
+  <div class="message">Taking you to our review page...</div>
+  <div class="spinner"></div>
 
   <script>
     // Configuration
-    const config = {
-      gasUrl: "https://script.google.com/macros/s/AKfycbyYBlR45iVe5pqqrs4n0yrtLv66p6ppdAmN9TMm7rVBkjIDIxHRXiapoqwhdOpQcj65QQ/exec",  // 👈 Replace after new deployment
-      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA"
-    };
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxjbkY4VTbq4xzNLY5alfz3z_kuDZ-6HDKOZL13llQyp6bpArN57VO7COCzN611qORU/exec";
+    const DEFAULT_REVIEW_URL = "https://g.page/r/CUo-0tq7WzhQEBM/review";
+    const TRACKING_DELAY = 300; // ms before redirect (allows GAS to start processing)
 
-    // Get user ID from URL
+    // Extract ID from URL (/marky-review → "marky")
     function getUserId() {
-      const match = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
-      return match ? match[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
+      const path = window.location.pathname;
+      const match = path.match(/\/([a-z0-9]+)-review/i);
+      return match ? match[1].toLowerCase() : null;
     }
 
-    // Preload the correct review URL
-    function preloadReview() {
-      const id = getUserId();
-      fetch(`${config.gasUrl}?mode=preload&id=${id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.url) {
-            sessionStorage.setItem('preloadedReviewUrl', data.url);
-          }
-        })
-        .catch(() => console.log("Preload failed (will fallback)"));
+    // Start tracking (fires and forgets)
+    function trackUser(id) {
+      // Send to Google Apps Script
+      fetch(`${GAS_URL}?id=${encodeURIComponent(id)}`, {
+        mode: 'no-cors',
+        cache: 'no-store'
+      }).catch(e => console.log("Tracking sent"));
     }
 
-    // Handle review click (instant redirect)
-    function handleReviewClick() {
-      const id = getUserId();
-      const spinner = document.getElementById('loadingSpinner');
-      const preloadedUrl = sessionStorage.getItem('preloadedReviewUrl');
+    // Main flow
+    const userId = getUserId();
+    if (userId) {
+      // 1. Start tracking immediately (no waiting)
+      trackUser(userId);
 
-      // 1. Use preloaded URL if available
-      if (preloadedUrl) {
-        window.location.href = preloadedUrl;
-      } 
-      // 2. Fallback: Fetch URL and redirect
-      else {
-        spinner.style.display = 'block';
-        fetch(`${config.gasUrl}?mode=preload&id=${id}`)
-          .then(res => res.json())
-          .then(data => {
-            window.location.href = data.url || REVIEW_URLS.ReviewTrackerML;
-          })
-          .catch(() => {
-            window.location.href = REVIEW_URLS.ReviewTrackerML;
-          });
-      }
-
-      // Log the click in background
-      fetch(`${config.gasUrl}?mode=track&id=${id}&choice=Review`, { 
-        mode: 'no-cors' 
-      }).catch(() => console.log("Tracking completed"));
+      // 2. Redirect after brief delay (allows tracking to initiate)
+      setTimeout(() => {
+        window.location.href = DEFAULT_REVIEW_URL;
+      }, TRACKING_DELAY);
+    } else {
+      // Invalid URL format
+      document.querySelector('.message').textContent = "Page not found. Please check your link.";
+      document.querySelector('.spinner').style.display = 'none';
     }
-
-    // Handle feedback click
-    function handleFeedbackClick() {
-      const id = getUserId();
-      window.location.href = config.feedbackUrl;
-      
-      // Log the click in background
-      fetch(`${config.gasUrl}?mode=track&id=${id}&choice=Feedback`, { 
-        mode: 'no-cors' 
-      }).catch(() => console.log("Tracking completed"));
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      preloadReview(); // Start preloading immediately
-      
-      document.getElementById('reviewBtn').addEventListener('click', handleReviewClick);
-      document.getElementById('feedbackBtn').addEventListener('click', handleFeedbackClick);
-    });
   </script>
 </body>
 </html>
