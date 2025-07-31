@@ -11,6 +11,8 @@
       padding: 40px 20px;
       background-color: #f9f9f9;
       color: #333;
+      max-width: 600px;
+      margin: 0 auto;
     }
     .logo {
       width: 250px;
@@ -19,17 +21,29 @@
     .message {
       font-size: 1.3em;
       margin: 30px 0 15px;
+      line-height: 1.5;
     }
-    .btn {
-      display: inline-block;
-      padding: 12px 24px;
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .review-btn, .feedback-btn {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      padding: 16px 32px;
       font-size: 1.1em;
       font-weight: bold;
-      border-radius: 6px;
-      color: white;
       text-decoration: none;
-      margin: 10px;
-      transition: all 0.3s;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
     .review-btn {
       background-color: #01549C;
@@ -45,78 +59,68 @@
       background-color: #B01724;
       transform: translateY(-2px);
     }
+    #loadingSpinner {
+      display: none;
+      margin: 20px 0;
+      font-size: 1.1em;
+      color: #01549C;
+    }
   </style>
 </head>
 <body>
-  <!-- Dynamic content will be inserted here -->
-  <div id="content">
-    <div class="spinner"></div>
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
+
+  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
+  
+  <div class="btn-container">
+    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+    <div id="loadingSpinner">⏳ Loading...</div>
+  </div>
+
+  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
+  
+  <div class="btn-container">
+    <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
   </div>
 
   <script>
     // Configuration
     const config = {
+      gasUrl: "https://script.google.com/macros/s/AKfycbx3opmDtw2VplHsp1SNeUIhlfKppZZA8LcVV5-wF-X09ETrIGITAGwv8b4ksRo0Z5muew/exec",
+      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA",
       reviewUrls: {
-        ML: 'https://g.page/r/CUo-0tq7WzhQEBM/review',
-        CW: 'https://g.page/r/CUWPceUi9tjXEBM/review'
-      },
-      feedbackUrl: 'https://forms.gle/7M9bViSeiCjKa3WcA',
-      gasTrackingUrl: 'https://script.google.com/macros/s/AKfycbyNdGVEUtTVNFNBxgySnjYCzKYITUzVz5zSD97OSV2t2xnO7CGO3az71IkgP-7PAFf2xQ/exec'
+        ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
+        CW: "https://g.page/r/CUWPceUi9tjXEBM/review"
+      }
     };
 
-    // Extract ML/CW and ID from URL
+    // Get URL parameters
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const type = pathParts[0]; // 'ML' or 'CW'
     const userId = pathParts[1]; // 'annalisa', 'marky', etc.
 
-    // Show appropriate landing page
-    function showLandingPage() {
-      const content = `
-        <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
-        <p class="message">${type === 'ML' 
-          ? "Thank you for choosing Scholars!" 
-          : "We appreciate your feedback!"}</p>
-        <a href="${config.reviewUrls[type]}" class="btn review-btn" id="reviewBtn">
-          Leave a Review
-        </a>
-        <a href="${config.feedbackUrl}" class="btn feedback-btn">
-          Share Feedback
-        </a>
-      `;
-      document.getElementById('content').innerHTML = content;
-      
-      // Track the pageview
-      trackInteraction('pageview');
-      
-      // Track review button clicks
-      document.getElementById('reviewBtn')?.addEventListener('click', () => {
-        trackInteraction('review_click');
-      });
-    }
-
-    // Send tracking data to GAS
-    function trackInteraction(action) {
-      const data = {
-        type: type,
-        id: userId,
-        action: action,
-        timestamp: new Date().toISOString()
-      };
-      
-      fetch(`${config.gasTrackingUrl}?data=${encodeURIComponent(JSON.stringify(data))}`, {
-        mode: 'no-cors',
-        cache: 'no-store'
+    // Track interaction
+    function track(action) {
+      fetch(`${config.gasUrl}?id=${userId}&action=${action}&type=${type}`, {
+        mode: 'no-cors'
       }).catch(e => console.log('Tracking sent'));
     }
 
-    // Initialize
-    if (['ML', 'CW'].includes(type) && userId) {
-      showLandingPage();
-    } else {
-      document.getElementById('content').innerHTML = `
-        <p>Invalid link. Please check the URL and try again.</p>
-      `;
-    }
+    // Handle review click
+    document.getElementById('reviewBtn').addEventListener('click', () => {
+      document.getElementById('loadingSpinner').style.display = 'block';
+      track('review');
+      window.location.href = config.reviewUrls[type];
+    });
+
+    // Handle feedback click
+    document.getElementById('feedbackBtn').addEventListener('click', () => {
+      track('feedback');
+      window.location.href = config.feedbackUrl;
+    });
+
+    // Track pageview
+    track('pageview');
   </script>
 </body>
 </html>
