@@ -13,7 +13,7 @@
       color: #333;
     }
     .logo {
-      width: 175px;
+      width: 250px; /* Updated from 150px to 250px */
       margin-bottom: 30px;
     }
     .message {
@@ -46,51 +46,86 @@
     .feedback-btn:hover {
       background-color: #B01724;
     }
+    #loadingSpinner {
+      display: none;
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: #01549C;
+    }
   </style>
 </head>
 <body>
+  <!-- Larger Scholars Logo (250px) -->
   <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
 
   <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
-  <button class="review-btn">Click here to leave us a review</button>
+  <button class="review-btn" id="reviewButton">Click here to leave us a review</button>
 
   <p class="message">If you have feedback, we'd love to hear it!</p>
   <button class="feedback-btn">Share Your Experience</button>
 
+  <div id="loadingSpinner">⏳ Loading...</div>
+
   <script>
+    // Get user ID from URL (e.g., "/abc123-review" => "abc123")
     function getUserId() {
       const pathMatch = window.location.pathname.match(/\/([a-z0-9]+)-review/i);
       return pathMatch ? pathMatch[1] : 'unknown';
     }
 
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbw6H9r2aHdmgHrAsK1yBbXNgZFXUDaUgQc9skRD4dHqTQxNEbXtEWJQVsB1k22ZC8c/exec"; // 👈 Update after GAS deployment
-    const feedbackUrl = "https://forms.gle/7M9bViSeiCjKa3WcA"; // Replace if needed
+    // Replace with your GAS web app URL (deploy as "Anyone, even anonymous")
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbw6H9r2aHdmgHrAsK1yBbXNgZFXUDaUgQc9skRD4dHqTQxNEbXtEWJQVsB1k22ZC8c/exec";
+    const feedbackUrl = "https://forms.gle/7M9bViSeiCjKa3WcA"; // Your feedback link
+    let reviewUrl = null; // Stores the correct link (ML or CW)
 
-    async function logAndRedirect(choice) {
+    // Preload the correct review link when the page loads
+    async function preloadReviewLink() {
       const id = getUserId();
-      const url = `${scriptUrl}?id=${encodeURIComponent(id)}&choice=${encodeURIComponent(choice)}`;
-
       try {
-        const response = await fetch(url);
+        const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review`);
         const data = await response.json();
-
-        if (data.success) {
-          if (choice === 'Review' && data.reviewUrl) {
-            window.location.href = data.reviewUrl; // Dynamic review link
-          } else if (choice === 'Feedback') {
-            window.location.href = feedbackUrl; // Static feedback link
-          }
-        } else {
-          alert(data.message || "Error: Could not process your request.");
-        }
+        if (data.success) reviewUrl = data.reviewUrl;
       } catch (error) {
-        alert("Network error. Please try again.");
-        console.error("Fetch failed:", error);
+        console.error("Preload failed (will fetch on click):", error);
       }
     }
 
-    document.querySelector('.review-btn').addEventListener('click', () => logAndRedirect('Review'));
-    document.querySelector('.feedback-btn').addEventListener('click', () => logAndRedirect('Feedback'));
+    // On review button click: Use preloaded link OR fetch fresh (fallback)
+    async function handleReviewClick() {
+      const reviewButton = document.getElementById('reviewButton');
+      const spinner = document.getElementById('loadingSpinner');
+      
+      reviewButton.style.display = 'none';
+      spinner.style.display = 'block';
+
+      if (reviewUrl) {
+        window.location.href = reviewUrl; // Instant redirect (preloaded)
+      } else {
+        // Fallback: Fetch link if preload failed
+        try {
+          const id = getUserId();
+          const response = await fetch(`${scriptUrl}?id=${encodeURIComponent(id)}&choice=Review`);
+          const data = await response.json();
+          if (data.success) window.location.href = data.reviewUrl;
+          else alert("Error: Could not load the review link. Please try again.");
+        } catch (error) {
+          alert("Network error. Please check your connection.");
+        } finally {
+          reviewButton.style.display = 'inline-block';
+          spinner.style.display = 'none';
+        }
+      }
+    }
+
+    // Feedback button (unchanged)
+    function handleFeedbackClick() {
+      window.location.href = feedbackUrl;
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', preloadReviewLink);
+    document.getElementById('reviewButton').addEventListener('click', handleReviewClick);
+    document.querySelector('.feedback-btn').addEventListener('click', handleFeedbackClick);
   </script>
 </body>
 </html>
