@@ -86,12 +86,8 @@
   <script>
     // Configuration
     const config = {
-      gasUrl: "https://script.google.com/macros/s/AKfycbwiGSL9aUsLrs3_K5zZQB9jaCqQ9b0xonmHIzoVPvuumi4c0XF0UxiDZrWw3KugcmX5aA/exec",
-      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA",
-      reviewUrls: {
-        ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
-        CW: "https://g.page/r/CUWPceUi9tjXEBM/review"
-      }
+      gasUrl: "https://script.google.com/macros/s/AKfycbyYBlR45iVe5pqqrs4n0yrtLv66p6ppdAmN9TMm7rVBkjIDIxHRXiapoqwhdOpQcj65QQ/exec",  // 👈 Replace after new deployment
+      feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA"
     };
 
     // Get user ID from URL
@@ -100,31 +96,65 @@
       return match ? match[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
     }
 
-    // Track button click (works for both buttons)
-    function trackClick(type, redirectUrl) {
-      const userId = getUserId();
+    // Preload the correct review URL
+    function preloadReview() {
+      const id = getUserId();
+      fetch(`${config.gasUrl}?mode=preload&id=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.url) {
+            sessionStorage.setItem('preloadedReviewUrl', data.url);
+          }
+        })
+        .catch(() => console.log("Preload failed (will fallback)"));
+    }
+
+    // Handle review click (instant redirect)
+    function handleReviewClick() {
+      const id = getUserId();
       const spinner = document.getElementById('loadingSpinner');
+      const preloadedUrl = sessionStorage.getItem('preloadedReviewUrl');
+
+      // 1. Use preloaded URL if available
+      if (preloadedUrl) {
+        window.location.href = preloadedUrl;
+      } 
+      // 2. Fallback: Fetch URL and redirect
+      else {
+        spinner.style.display = 'block';
+        fetch(`${config.gasUrl}?mode=preload&id=${id}`)
+          .then(res => res.json())
+          .then(data => {
+            window.location.href = data.url || REVIEW_URLS.ReviewTrackerML;
+          })
+          .catch(() => {
+            window.location.href = REVIEW_URLS.ReviewTrackerML;
+          });
+      }
+
+      // Log the click in background
+      fetch(`${config.gasUrl}?mode=track&id=${id}&choice=Review`, { 
+        mode: 'no-cors' 
+      }).catch(() => console.log("Tracking completed"));
+    }
+
+    // Handle feedback click
+    function handleFeedbackClick() {
+      const id = getUserId();
+      window.location.href = config.feedbackUrl;
       
-      // Show loading state
-      spinner.style.display = 'block';
-      
-      // 1. Immediate redirect
-      window.location.href = redirectUrl;
-      
-      // 2. Background tracking (no waiting)
-      fetch(`${config.gasUrl}?mode=track&id=${userId}&choice=${type === 'review' ? 'Review' : 'Feedback'}`, {
-        method: 'GET',
-        mode: 'no-cors'
-      }).catch(e => console.log("Tracking completed in background"));
+      // Log the click in background
+      fetch(`${config.gasUrl}?mode=track&id=${id}&choice=Feedback`, { 
+        mode: 'no-cors' 
+      }).catch(() => console.log("Tracking completed"));
     }
 
     // Initialize
-    document.getElementById('reviewBtn').addEventListener('click', () => {
-      trackClick('review', config.reviewUrls.ML);
-    });
-    
-    document.getElementById('feedbackBtn').addEventListener('click', () => {
-      trackClick('feedback', config.feedbackUrl);
+    document.addEventListener('DOMContentLoaded', () => {
+      preloadReview(); // Start preloading immediately
+      
+      document.getElementById('reviewBtn').addEventListener('click', handleReviewClick);
+      document.getElementById('feedbackBtn').addEventListener('click', handleFeedbackClick);
     });
   </script>
 </body>
