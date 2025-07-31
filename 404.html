@@ -1,53 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scholars Review</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scholars Review & Feedback</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 40px 20px;
       background-color: #f9f9f9;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
     }
     .logo {
       width: 250px;
       margin-bottom: 30px;
     }
-    .btn {
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 4px;
-      border: none;
+    .message {
+      font-size: 1.3em;
+      margin: 30px 0 15px;
+      line-height: 1.5;
+    }
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .review-btn, .feedback-btn {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      padding: 16px 32px;
+      font-size: 1.1em;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 8px;
       color: white;
       cursor: pointer;
-      margin: 10px;
+      border: none;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
     .review-btn {
       background-color: #01549C;
     }
+    .review-btn:hover {
+      background-color: #013F70;
+      transform: translateY(-2px);
+    }
     .feedback-btn {
       background-color: #E71F2E;
     }
-    #spinner {
+    .feedback-btn:hover {
+      background-color: #B01724;
+      transform: translateY(-2px);
+    }
+    #loadingSpinner {
       display: none;
-      margin-top: 20px;
+      margin: 20px 0;
+      font-size: 1.1em;
+      color: #01549C;
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo">
+  <img class="logo" src="https://i.imgur.com/AKwAdog.jpeg" alt="Scholars Logo" />
+
+  <p class="message">If you're happy with our work, please leave us a 5-star review.</p>
   
-  <button id="reviewBtn" class="btn review-btn">Leave a Review</button>
-  <button id="feedbackBtn" class="btn feedback-btn">Give Feedback</button>
+  <div class="btn-container">
+    <button class="review-btn" id="reviewBtn">Click here to leave us a review</button>
+    <div id="loadingSpinner">⏳ Loading...</div>
+  </div>
+
+  <p class="message">If you have feedback on how we can improve, we'd love to hear it too!</p>
   
-  <div id="spinner">⏳ Loading...</div>
+  <div class="btn-container">
+    <button class="feedback-btn" id="feedbackBtn">Share Your Experience</button>
+  </div>
 
   <script>
     // Configuration
     const config = {
-      gasUrl: "https://script.google.com/macros/s/AKfycbyMV5eRqLSPKepecbGzMGL62KWpuA9Gxoy2Wvou13z1EdL7tVCfu3bFKmuBsDtci-i9Pw/exec",
+      gasUrl: "https://script.google.com/macros/s/AKfycbwiGSL9aUsLrs3_K5zZQB9jaCqQ9b0xonmHIzoVPvuumi4c0XF0UxiDZrWw3KugcmX5aA/exec",
       feedbackUrl: "https://forms.gle/7M9bViSeiCjKa3WcA",
       reviewUrls: {
         ML: "https://g.page/r/CUo-0tq7WzhQEBM/review",
@@ -61,39 +100,31 @@
       return match ? match[1] : 'unknown_' + Math.random().toString(36).substr(2, 5);
     }
 
-    // Fast-track review redirect
-    async function handleReview() {
+    // Track button click (works for both buttons)
+    function trackClick(type, redirectUrl) {
       const userId = getUserId();
-      const spinner = document.getElementById('spinner');
-      const reviewBtn = document.getElementById('reviewBtn');
+      const spinner = document.getElementById('loadingSpinner');
       
       // Show loading state
-      reviewBtn.disabled = true;
       spinner.style.display = 'block';
       
-      try {
-        // 1. Immediately redirect to most likely URL (ML)
-        let reviewUrl = config.reviewUrls.ML;
-        window.location.href = reviewUrl;
-        
-        // 2. Log the click in background (no waiting)
-        fetch(`${config.gasUrl}?mode=track&id=${userId}&choice=Review`, {
-          method: 'GET',
-          mode: 'no-cors'
-        }).catch(e => console.log("Tracking completed in background"));
-        
-      } catch (error) {
-        console.error("Redirect error:", error);
-        spinner.style.display = 'none';
-        reviewBtn.disabled = false;
-        alert("Please try again. If the problem persists, contact support.");
-      }
+      // 1. Immediate redirect
+      window.location.href = redirectUrl;
+      
+      // 2. Background tracking (no waiting)
+      fetch(`${config.gasUrl}?mode=track&id=${userId}&choice=${type === 'review' ? 'Review' : 'Feedback'}`, {
+        method: 'GET',
+        mode: 'no-cors'
+      }).catch(e => console.log("Tracking completed in background"));
     }
 
     // Initialize
-    document.getElementById('reviewBtn').addEventListener('click', handleReview);
+    document.getElementById('reviewBtn').addEventListener('click', () => {
+      trackClick('review', config.reviewUrls.ML);
+    });
+    
     document.getElementById('feedbackBtn').addEventListener('click', () => {
-      window.location.href = config.feedbackUrl;
+      trackClick('feedback', config.feedbackUrl);
     });
   </script>
 </body>
